@@ -150,7 +150,7 @@ def train(pth, imtype, datatype, real_data, Disc, Gen, nc, l, nz, sf):
                     steps = len(dataloaderx)
                     util.calc_eta(steps, time.time(), start, i, epoch, num_epochs)
                     ###save example slices
-                    util.test_plotter(img, 5, imtype, pth)
+                    #util.test_plotter(img, 5, imtype, pth)
                     # plotting graphs
                     util.graph_plot([disc_real_log, disc_fake_log], ['real', 'perp'], pth, 'LossGraph')
                     util.graph_plot([Wass_log], ['Wass Distance'], pth, 'WassGraph')

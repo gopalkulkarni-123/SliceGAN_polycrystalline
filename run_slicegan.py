@@ -12,25 +12,36 @@ Project_name = 'NMC'
 # Specify project folder.
 Project_dir = 'Trained_Generators'
 # Run with False to show an image during or after training
-parser = argparse.ArgumentParser()
+"""parser = argparse.ArgumentParser()
 parser.add_argument('training', type=int)
 args = parser.parse_args()
-Training = args.training
-# Training = 0
+Training = args.training"""
+Training = 1
 
 Project_path = util.mkdr(Project_name, Project_dir, Training)
 
 ## Data Processing
 # Define image  type (colour, grayscale, three-phase or two-phase.
 # n-phase materials must be segmented)
-image_type = 'nphase'
-# img_channels should be number of phases for nphase, 3 for colour, or 1 for grayscale
-img_channels = 3
+
+image_type = 'grayscale'
+#image_type = 'nphase'
+
+#  img_channels should be number of phases for nphase, 3 for colour, or 1 for grayscale
+
+img_channels = 1
+#img_channels = 3
+
 # define data type (for colour/grayscale images, must be 'colour' / '
 # greyscale. nphase can be, 'tif2D', 'png', 'jpg', tif3D, 'array')
-data_type = 'tif3D'
+
+data_type = 'grayscale'
+#data_type = 'tif3D'
+
 # Path to your data. One string for isotrpic, 3 for anisotropic
-data_path = ['Examples/NMC.tif']
+
+data_path = ['./images/metal_texture.jpg']
+#data_path = ['./Examples/NMC.tif']
 
 ## Network Architectures
 # Training image size, no. channels and scale factor vs raw data

@@ -11,6 +11,7 @@ def batch(data,type,l, sf):
     :param sf: scale factor
     :return:
     """
+    num_crops = 32*10
     Testing = False
     if type in ['png', 'jpg', 'tif2D']:
         datasetxyz = []
@@ -21,8 +22,8 @@ def batch(data,type,l, sf):
             img = img[::sf,::sf]
             x_max, y_max= img.shape[:]
             phases = np.unique(img)
-            data = np.empty([32 * 900, len(phases), l, l])
-            for i in range(32 * 900):
+            data = np.empty([num_crops, len(phases), l, l])
+            for i in range(num_crops):
                 x = np.random.randint(1, x_max - l-1)
                 y = np.random.randint(1, y_max - l-1)
                 # create one channel per phase for one hot encoding
@@ -51,9 +52,9 @@ def batch(data,type,l, sf):
         print('training image shape: ', img.shape)
         vals = np.unique(img)
         for dim in range(3):
-            data = np.empty([32 * 900, len(vals), l, l])
+            data = np.empty([num_crops, len(vals), l, l])
             print('dataset ', dim)
-            for i in range(32*900):
+            for i in range(num_crops):
                 x = np.random.randint(0, x_max - l)
                 y = np.random.randint(0, y_max - l)
                 z = np.random.randint(0, z_max - l)
@@ -87,7 +88,7 @@ def batch(data,type,l, sf):
         for img in data:
             img = plt.imread(img)
             img = img[::sf,::sf,:]
-            ep_sz = 32 * 900
+            ep_sz = num_crops
             data = np.empty([ep_sz, 3, l, l])
             x_max, y_max = img.shape[:2]
             for i in range(ep_sz):
@@ -120,8 +121,8 @@ def batch(data,type,l, sf):
             img = img/img.max()
             img = img[::sf, ::sf]
             x_max, y_max = img.shape[:]
-            data = np.empty([32 * 900, 1, l, l])
-            for i in range(32 * 900):
+            data = np.empty([num_crops, 1, l, l])
+            for i in range(num_crops):
                 x = np.random.randint(1, x_max - l - 1)
                 y = np.random.randint(1, y_max - l - 1)
                 subim = img[x:x + l, y:y + l]
