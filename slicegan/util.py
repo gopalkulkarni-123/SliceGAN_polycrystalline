@@ -182,8 +182,12 @@ def test_img(pth, imtype, netG, nz = 64, lf = 4, periodic=False):
     """
     netG.load_state_dict(torch.load(pth + '_Gen.pt'))
     netG.eval()
-    netG.cuda()
-    noise = torch.randn(1, nz, lf, lf, lf).cuda()
+    
+    #netG.cuda()
+    device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+    print(device, " will be used.\n")
+    netG.to(device)
+    noise = torch.randn(1, nz, lf, lf, lf, device=device)
     if periodic:
         if periodic[0]:
             noise[:, :, :2] = noise[:, :, -2:]
@@ -204,7 +208,7 @@ def test_img(pth, imtype, netG, nz = 64, lf = 4, periodic=False):
             gb = gb[:,:,:-1]
     tif = np.int_(gb)
     tifffile.imwrite(pth + '.tif', tif)
-
+    
     return tif, raw, netG
 
 

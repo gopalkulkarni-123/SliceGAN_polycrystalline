@@ -8,7 +8,7 @@ to generate a synthetic image using a trained generator.
 from slicegan import model, networks, util
 import argparse
 # Define project name
-Project_name = 'NMC'
+Project_name = 'NMCTrained'
 # Specify project folder.
 Project_dir = 'Trained_Generators'
 # Run with False to show an image during or after training
@@ -16,7 +16,7 @@ Project_dir = 'Trained_Generators'
 parser.add_argument('training', type=int)
 args = parser.parse_args()
 Training = args.training"""
-Training = 1
+Training = 0
 
 Project_path = util.mkdr(Project_name, Project_dir, Training)
 
@@ -67,4 +67,5 @@ netD, netG = networks.slicegan_rc_nets(Project_path, Training, image_type, dk, d
 if Training:
     model.train(Project_path, image_type, data_type, data_path, netD, netG, img_channels, img_size, z_channels, scale_factor)
 else:
-    img, raw, netG = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic=[0, 1, 1])
+    #img, raw, netG = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic=[0, 1, 1])
+    img, raw, netG = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic= False)
