@@ -11,7 +11,7 @@ def batch(data,type,l, sf):
     :param sf: scale factor
     :return:
     """
-    num_crops = 32*10
+    num_crops = 32*100
     Testing = False
     if type in ['png', 'jpg', 'tif2D']:
         datasetxyz = []

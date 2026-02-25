@@ -122,6 +122,28 @@ def post_proc(img,imtype):
     else:
         nphase = img.shape[1]
         return 255*torch.argmax(img, 1)/(nphase-1)
+    
+def post_proc_3d(img, imtype):
+    try:
+        img = img.detach().cpu()
+    except:
+        pass
+
+    if imtype == 'colour':
+        # Result: (Batch, Depth, Height, Width, RGB) -> (D, H, W, C)
+        return np.int_(255 * (np.swapaxes(img[0], 0, -1)))
+
+    if imtype == 'grayscale':
+        # img is (B, C, D, H, W). We want (D, H, W)
+        # We take the first batch [0] and first channel [0]
+        return 255 * img[0, 0, :, :, :] 
+
+    else:
+        # For nphase (One-Hot). Result: (B, D, H, W)
+        nphase = img.shape[1]
+        # We take the first batch [0] to get (D, H, W)
+        return 255 * torch.argmax(img, 1)[0] / (nphase - 1)
+
         
 def test_plotter(img,slcs,imtype,pth):
     """
@@ -198,6 +220,7 @@ def test_img(pth, imtype, netG, nz = 64, lf = 4, periodic=False):
     with torch.no_grad():
         raw = netG(noise)
     print('Postprocessing')
+    volumeElement = post_proc_3d(raw, imtype)
     gb = post_proc(raw,imtype)[0]
     if periodic:
         if periodic[0]:
@@ -209,7 +232,7 @@ def test_img(pth, imtype, netG, nz = 64, lf = 4, periodic=False):
     tif = np.int_(gb)
     tifffile.imwrite(pth + '.tif', tif)
     
-    return tif, raw, netG
+    return tif, raw, netG, volumeElement
 
 
 

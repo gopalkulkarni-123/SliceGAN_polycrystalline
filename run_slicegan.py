@@ -7,6 +7,7 @@ to generate a synthetic image using a trained generator.
 
 from slicegan import model, networks, util
 import argparse
+import tifffile
 # Define project name
 Project_name = 'NMCTrained'
 # Specify project folder.
@@ -16,7 +17,7 @@ Project_dir = 'Trained_Generators'
 parser.add_argument('training', type=int)
 args = parser.parse_args()
 Training = args.training"""
-Training = 0
+Training = 1
 
 Project_path = util.mkdr(Project_name, Project_dir, Training)
 
@@ -68,4 +69,25 @@ if Training:
     model.train(Project_path, image_type, data_type, data_path, netD, netG, img_channels, img_size, z_channels, scale_factor)
 else:
     #img, raw, netG = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic=[0, 1, 1])
-    img, raw, netG = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic= False)
+    #img, raw, netG, vol = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic= False)
+
+    #"""
+    # 1. Generate the volume
+    # Note: Pass 'netG', not 'netG()'
+    img, raw, netG_model, vol = util.test_img(Project_path, image_type, netG(), z_channels, lf=8, periodic=False)
+
+    # 2. 'img' is the post-processed numpy array returned by util.test_img
+    # SliceGAN's util.test_img already contains tifffile.imwrite, 
+    # but let's ensure it's saved in a standard format here:
+    output_filename = Project_path + '_FinalVolume.tif'
+    
+    # Convert to uint8 (0-255) for compatibility with ImageJ/Fiji
+    # 1. Ensure it's on CPU, detached from gradients, and converted to NumPy
+    vol_numpy = vol.detach().cpu().numpy()
+
+    # 2. Now you can use astype (or just use the torch method before converting)
+    save_volume = vol_numpy.astype('uint8')
+    
+    tifffile.imwrite(output_filename, save_volume)
+    print(f"3D Volume saved successfully at: {output_filename}")
+    #"""
