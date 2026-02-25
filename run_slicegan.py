@@ -17,7 +17,7 @@ Project_dir = 'Trained_Generators'
 parser.add_argument('training', type=int)
 args = parser.parse_args()
 Training = args.training"""
-Training = 1
+Training = 0
 
 Project_path = util.mkdr(Project_name, Project_dir, Training)
 
@@ -41,7 +41,7 @@ data_type = 'grayscale'
 
 # Path to your data. One string for isotrpic, 3 for anisotropic
 
-data_path = ['./images/metal_texture.jpg']
+data_path = ['./images/slice_train.jpg']
 #data_path = ['./Examples/NMC.tif']
 
 ## Network Architectures
@@ -79,7 +79,7 @@ else:
     # 2. 'img' is the post-processed numpy array returned by util.test_img
     # SliceGAN's util.test_img already contains tifffile.imwrite, 
     # but let's ensure it's saved in a standard format here:
-    output_filename = Project_path + '_FinalVolume.tif'
+    output_filename = Project_path + '_best_output.tif'
     
     # Convert to uint8 (0-255) for compatibility with ImageJ/Fiji
     # 1. Ensure it's on CPU, detached from gradients, and converted to NumPy

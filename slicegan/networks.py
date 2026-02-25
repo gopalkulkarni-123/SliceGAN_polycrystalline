@@ -95,7 +95,11 @@ def slicegan_rc_nets(pth, Training, imtype, dk,ds,df,dp,gk,gs,gf,gp):
                 x = F.relu_(bn(conv(x)))
             size = (int(x.shape[2]-1,)*2,int(x.shape[3]-1,)*2,int(x.shape[3]-1,)*2)
             up = nn.Upsample(size=size, mode='trilinear', align_corners=False)
-            out = torch.softmax(self.rcconv(up(x)), 1)
+            #use tanh if colour or grayscale, otherwise softmax for one hot encoded
+            if imtype in ['grayscale', 'colour']:
+                out = 0.5*(torch.tanh(self.rcconv(up(x)))+1)
+            else:
+                out = torch.softmax(self.rcconv(up(x)),1)
             # print(out.shape)
             return out
 
