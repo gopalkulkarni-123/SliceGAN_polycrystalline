@@ -1,94 +1,76 @@
-import tifffile as tiff
 import numpy as np
-from scipy import ndimage as ndi
-from skimage import filters, morphology
+import tifffile
+import porespy as ps
+import matplotlib.pyplot as plt
+from skimage import measure
 
-def simple_3d_mask(volume):
+def get_volume_fraction(vol):
+    """Calculates the volume fraction of the 1-phase."""
+    return np.mean(vol)
 
-    # light denoising
-    v = ndi.gaussian_filter(volume, sigma=1.0)
+def get_surface_area_density(vol):
+    """Calculates Sv (Surface Area / Total Volume) using Marching Cubes."""
+    if np.unique(vol).size == 1: # Handle case where GAN output is all one value
+        return 0.0
+    verts, faces, _, _ = measure.marching_cubes(vol)
+    surface_area = measure.mesh_surface_area(verts, faces)
+    return surface_area / vol.size
 
-    # global 3D threshold
-    t = filters.threshold_otsu(v)
+def get_two_point_correlation(vol):
+    """Computes the S2 probability function using PoreSpy."""
+    return ps.metrics.two_point_correlation(vol)
 
-    mask = v > t
+def get_chord_distribution(vol, bins=25):
+    """Computes chord length distribution on the grain phase (0-phase)."""
+    # 1 - vol flips boundaries to grains so we measure grain sizes
+    return ps.metrics.chord_length_distribution(1 - vol, bins=bins)
 
-    # small cleanup
-    mask = morphology.remove_small_objects(mask, min_size=100)
-    mask = ndi.binary_fill_holes(mask)
+def plot_comparison(real_data, gan_data, title, xlabel, ylabel, plot_type='plot'):
+    """Helper to standardize plotting."""
+    plt.figure(figsize=(6, 4))
+    if plot_type == 'plot':
+        plt.plot(real_data.distance, real_data.probability, 'k-', label='Real')
+        plt.plot(gan_data.distance, gan_data.probability, 'r--', label='SliceGAN')
+    elif plot_type == 'bar':
+        plt.bar(real_data.L, real_data.pdf, alpha=0.5, color='gray', label='Real')
+        plt.step(gan_data.L, gan_data.pdf, color='red', where='mid', label='SliceGAN')
+    
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+    plt.show()
 
-    return mask
+def run_microstructure_report(real_path, gan_path):
+    # 1. Load and Binarize
+    real_vol = (tifffile.imread(real_path) > 0).astype(int)
+    gan_vol = (tifffile.imread(gan_path) > 0).astype(int)
+    
+    # 2. Compute Metrics
+    metrics = {
+        "Boundary Vol Fraction": (get_volume_fraction(real_vol), get_volume_fraction(gan_vol)),
+        "Surface Area Density (Sv)": (get_surface_area_density(real_vol), get_surface_area_density(gan_vol))
+    }
+    
+    # 3. Print Tabular Report
+    print(f"\n{'Metric':<25} | {'Real':<12} | {'SliceGAN':<12}")
+    print("-" * 55)
+    for name, values in metrics.items():
+        print(f"{name:<25} | {values[0]:<12.4f} | {values[1]:<12.4f}")
 
-def label_3d(mask):
+    # 4. Generate Distributions
+    s2_real = get_two_point_correlation(real_vol)
+    s2_gan = get_two_point_correlation(gan_vol)
+    
+    chords_real = get_chord_distribution(real_vol)
+    chords_gan = get_chord_distribution(gan_vol)
 
-    # 6 connectivity
-    structure = ndi.generate_binary_structure(3, 1)
+    # 5. Visualize
+    plot_comparison(s2_real, s2_gan, 'Two-Point Correlation ($S_2$)', 'Distance (voxels)', 'Probability')
+    plot_comparison(chords_real, chords_gan, 'Grain Size (Chord Length)', 'Length (voxels)', 'PDF', plot_type='bar')
 
-    labels, n = ndi.label(mask, structure=structure)
+# --- RUN ---
+real_bin_path = '/home/kulkarni/Desktop/2D_3D_conversion/SliceGAN_polycrystalline/extracted_jpegs/binarizedImages/real3Dvolume.tif'
+gan_bin_path = '/home/kulkarni/Desktop/2D_3D_conversion/SliceGAN_polycrystalline/Trained_Generators/NMCTrained/HPC_output/NMC_Trained_binarized_100_epochs_900_crops_thin.tif'
 
-    return labels, n
-
-def component_z_extents(labels):
-
-    extents = []
-
-    for lab in range(1, labels.max() + 1):
-
-        zz = np.where(labels == lab)[0]
-
-        if zz.size == 0:
-            continue
-
-        zmin = zz.min()
-        zmax = zz.max()
-
-        extents.append(zmax - zmin + 1)
-
-    return np.array(extents)
-
-def component_volumes(labels):
-
-    counts = np.bincount(labels.ravel())
-    return counts[1:]
-
-def percolation_flags(labels):
-
-    Z, Y, X = labels.shape
-
-    flags = []
-
-    for lab in range(1, labels.max() + 1):
-
-        mask = (labels == lab)
-
-        touch_z0 = mask[0,:,:].any()
-        touch_z1 = mask[-1,:,:].any()
-
-        touch_y0 = mask[:,0,:].any()
-        touch_y1 = mask[:,-1,:].any()
-
-        touch_x0 = mask[:,:,0].any()
-        touch_x1 = mask[:,:,-1].any()
-
-        flags.append({
-            "z": touch_z0 and touch_z1,
-            "y": touch_y0 and touch_y1,
-            "x": touch_x0 and touch_x1
-        })
-
-    return flags
-
-#real_vol = tiff.imread("real_volume.tif")
-ai_vol   = tiff.imread(r"D:\TU_Darmstadt\SliceGAN_polycrystalline\Trained_Generators\NMCTrained\NMCTrained_50_epoch_50_crops.tif")
-
-#print(real_vol.shape, real_vol.dtype)
-print(ai_vol.shape, ai_vol.dtype)
-
-#real_vol = np.moveaxis(real_vol, -1, 0)
-ai_vol   = np.moveaxis(ai_vol,   -1, 0)
-
-#real_vol = real_vol.astype(np.float32)
-ai_vol   = ai_vol.astype(np.float32)
-
-#real_mask = simple_3d_mask(real_vol)
-ai_mask   = simple_3d_mask(ai_vol)
+run_microstructure_report(real_bin_path, gan_bin_path)
