@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 import tifffile
 
-file_path = '/home/kulkarni/Desktop/2D_3D_conversion/Input/Synthetic HCP 3D polycrystalline microstructures with grain-wise microstructural descriptors and stress fields under uniaxial tensile deformation  Part One/Equal CRSS/HCP_equal_CRSS_voxelwise/EqualCRSS_micro1_voxelwise/micro1_1_voxel.h5'
+file_path = r'D:\TU_Darmstadt\SliceGAN_polycrystalline\Trained_Generators\NMCTrained\micro1_1_input_file\micro1_1_voxel.h5'
 
 with h5py.File(file_path, 'r') as f:
     # 1. Read the data
@@ -22,4 +22,4 @@ with h5py.File(file_path, 'r') as f:
 
     # 3. Save
     print(f"New shape for TIFF: {grains.shape}")
-    tifffile.imwrite('Grain_Structure.tif', grains.astype('uint16'), imagej=True)
+    tifffile.imwrite(r'D:\TU_Darmstadt\SliceGAN_polycrystalline\Trained_Generators\NMCTrained\HPC_output\Grain_Structure.tif', grains.astype('uint16'), imagej=True)
